@@ -34,13 +34,15 @@ var module_function = [
         //console.log('[+] Returned from SetWindowTextA : ' + return_value);
         //console.log('');
     } },
-{'global': {}, 'module': 'user32.dll', 'func': 'GetWindowTextA', 'pre': function (args) {
+{'global': {}, 'module': 'user32.dll', 'func': 'GetWindowTextA',
+    'pre': function (args) {
         console.log('[+] Called GetWindowTextA');
         console.log('Context  : ' + JSON.stringify(this.context));
         //  保存输出参数地址
         module_function[1].global[this.context.ebp] = args[1]
         console.log('args[1]  : ' + module_function[1].global[this.context.ebp]);
-    }, 'post': function (return_value) {
+    },
+    'post': function (return_value) {
         //  函数返回的时候，覆盖这个输出参数地址
         console.log('args[1]  : ' + module_function[1].global[this.context.ebp]);
         module_function[1].global[this.context.ebp].writeAnsiString("123456789");
@@ -48,6 +50,7 @@ var module_function = [
         console.log('Context  : ' + JSON.stringify(this.context));
         console.log('[+] Returned from GetWindowTextA : ' + return_value);
         console.log('');
+        delete module_function[1].global[this.context.ebp];
     } },
 {'global': {}, 'module': '', 'address': 0, 'pre': null, 'post': null},
 {'global': {}, 'module': '', 'offset': 0, 'pre': null, 'post': null},
