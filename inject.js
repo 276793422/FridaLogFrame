@@ -44,7 +44,6 @@ var module_function = [
         //  函数返回的时候，覆盖这个输出参数地址
         console.log('args[1]  : ' + module_function[1].global[this.context.ebp]);
         module_function[1].global[this.context.ebp].writeAnsiString("123456789");
-        console.log('Text     : ' + this.context.esp.add(0x8).readPointer().readCString())
         console.log('this     : ' + JSON.stringify(this));
         console.log('Context  : ' + JSON.stringify(this.context));
         console.log('[+] Returned from GetWindowTextA : ' + return_value);
