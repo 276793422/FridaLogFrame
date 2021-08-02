@@ -17,26 +17,41 @@
 //      Post 函数用得到的也就一个参数 返回值
 //
 //  唯一不确定的情况，是开启优化编译的情况下，当前模块的相关问题，参数是否能正确解析
+//  https://frida.re/docs/javascript-api/
 var module_function = [
-{'module': 'user32.dll', 'func': 'SetWindowTextA', 'pre': function (args) {
-        console.log('[+] Called SetWindowTextA');
-        for (var i = 0; i < 2; i++)
-        {
-            console.log('param    : '+i+': ' + args[i]);
-        }
-        console.log('Text     : ' + this.context.esp.add(0x8).readPointer().readCString())
+{'global': null, 'module': 'user32.dll', 'func': 'SetWindowTextA', 'pre': function (args) {
+        //console.log('[+] Called SetWindowTextA');
+        //for (var i = 0; i < 2; i++)
+        //{
+        //    console.log('param    : '+i+': ' + args[i]);
+        //}
+        //console.log('Text     : ' + this.context.esp.add(0x8).readPointer().readCString())
         //console.log('Text     : ' + args[1].readCString())
-
+        //console.log('this     : ' + JSON.stringify(this));
+        //console.log('Context  : ' + JSON.stringify(this.context));
+        //NotifyRemotePython('SetWindowTextA', args[1], args[1].readCString().length)
+    }, 'post': function (return_value) {
+        //console.log('[+] Returned from SetWindowTextA : ' + return_value);
+        //console.log('');
+    } },
+{'global': null, 'module': 'user32.dll', 'func': 'GetWindowTextA', 'pre': function (args) {
+        console.log('[+] Called GetWindowTextA');
+        console.log('Context  : ' + JSON.stringify(this.context));
+        //  保存输出参数地址
+        module_function[1].global = args[1]
+        console.log('args[1]  : ' + module_function[1].global);
+    }, 'post': function (return_value) {
+        //  函数返回的时候，覆盖这个输出参数地址
+        console.log('args[1]  : ' + module_function[1].global);
+        module_function[1].global.writeAnsiString("123456789");
+        console.log('Text     : ' + this.context.esp.add(0x8).readPointer().readCString())
         console.log('this     : ' + JSON.stringify(this));
         console.log('Context  : ' + JSON.stringify(this.context));
-
-        NotifyRemotePython('SetWindowTextA', args[1], args[1].readCString().length)
-    }, 'post': function (retval, args) {
-        console.log('[+] Returned from SetWindowTextA : ' + retval);
+        console.log('[+] Returned from GetWindowTextA : ' + return_value);
         console.log('');
     } },
-{'module': '', 'address': 0, 'pre': null, 'post': null},
-{'module': '', 'offset': 0, 'pre': null, 'post': null},
-{'module': '', 'func': '', 'pre': null, 'post': null}
+{'global': null, 'module': '', 'address': 0, 'pre': null, 'post': null},
+{'global': null, 'module': '', 'offset': 0, 'pre': null, 'post': null},
+{'global': null, 'module': '', 'func': '', 'pre': null, 'post': null}
 ];
 
