@@ -65,9 +65,27 @@ function CreateHijack() {
             }
             console.log(node.module + ' baseAddr: ' + baseAddr);
         }
+        
+        var pre_callback = node.pre;
+        var post_callback = node.post;
+        
+        if (pre_callback == null && post_callback == null) {
+            continue;
+        }
+        
         console.log('SendRequest at: ' + methodAddr);
+        
+        if (pre_callback == null) {
+            pre_callback = function (args) {
+            }
+        }
+        
+        if (post_callback == null) {
+            post_callback = function (retval) {
+            }
+        }
 
-        Interceptor.attach(methodAddr, { onEnter: node.pre, onLeave: node.post } );
+        Interceptor.attach(methodAddr, { onEnter: pre_callback, onLeave: post_callback } );
     }
 }
 CreateHijack();
