@@ -19,7 +19,7 @@
 //  唯一不确定的情况，是开启优化编译的情况下，当前模块的相关问题，参数是否能正确解析
 //  https://frida.re/docs/javascript-api/
 var module_function = [
-{'global': null, 'module': 'user32.dll', 'func': 'SetWindowTextA', 'pre': function (args) {
+{'global': {}, 'module': 'user32.dll', 'func': 'SetWindowTextA', 'pre': function (args) {
         //console.log('[+] Called SetWindowTextA');
         //for (var i = 0; i < 2; i++)
         //{
@@ -34,24 +34,24 @@ var module_function = [
         //console.log('[+] Returned from SetWindowTextA : ' + return_value);
         //console.log('');
     } },
-{'global': null, 'module': 'user32.dll', 'func': 'GetWindowTextA', 'pre': function (args) {
+{'global': {}, 'module': 'user32.dll', 'func': 'GetWindowTextA', 'pre': function (args) {
         console.log('[+] Called GetWindowTextA');
         console.log('Context  : ' + JSON.stringify(this.context));
         //  保存输出参数地址
-        module_function[1].global = args[1]
-        console.log('args[1]  : ' + module_function[1].global);
+        module_function[1].global[this.context.ebp] = args[1]
+        console.log('args[1]  : ' + module_function[1].global[this.context.ebp]);
     }, 'post': function (return_value) {
         //  函数返回的时候，覆盖这个输出参数地址
-        console.log('args[1]  : ' + module_function[1].global);
-        module_function[1].global.writeAnsiString("123456789");
+        console.log('args[1]  : ' + module_function[1].global[this.context.ebp]);
+        module_function[1].global[this.context.ebp].writeAnsiString("123456789");
         console.log('Text     : ' + this.context.esp.add(0x8).readPointer().readCString())
         console.log('this     : ' + JSON.stringify(this));
         console.log('Context  : ' + JSON.stringify(this.context));
         console.log('[+] Returned from GetWindowTextA : ' + return_value);
         console.log('');
     } },
-{'global': null, 'module': '', 'address': 0, 'pre': null, 'post': null},
-{'global': null, 'module': '', 'offset': 0, 'pre': null, 'post': null},
-{'global': null, 'module': '', 'func': '', 'pre': null, 'post': null}
+{'global': {}, 'module': '', 'address': 0, 'pre': null, 'post': null},
+{'global': {}, 'module': '', 'offset': 0, 'pre': null, 'post': null},
+{'global': {}, 'module': '', 'func': '', 'pre': null, 'post': null}
 ];
 
