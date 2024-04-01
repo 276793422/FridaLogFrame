@@ -18,7 +18,7 @@
 //
 //  唯一不确定的情况，是开启优化编译的情况下，当前模块的相关问题，参数是否能正确解析
 //  https://frida.re/docs/javascript-api/
-var module_function = [
+var module_function_windows = [
 {'global': {}, 'module': 'user32.dll', 'func': 'SetWindowTextA', 'pre': function (args) {
         //console.log('[+] Called SetWindowTextA');
         //for (var i = 0; i < 2; i++)
@@ -29,7 +29,7 @@ var module_function = [
         //console.log('Text     : ' + args[1].readCString())
         //console.log('this     : ' + JSON.stringify(this));
         //console.log('Context  : ' + JSON.stringify(this.context));
-        //NotifyRemotePython('SetWindowTextA', args[1], args[1].readCString().length)
+        //NotifyRemotePythonInformation('SetWindowTextA', args[1], args[1].readCString().length)
     }, 'post': function (return_value) {
         //console.log('[+] Returned from SetWindowTextA : ' + return_value);
         //console.log('');
@@ -56,4 +56,44 @@ var module_function = [
 {'global': {}, 'module': '', 'offset': 0, 'pre': null, 'post': null},
 {'global': {}, 'module': '', 'func': '', 'pre': null, 'post': null}
 ];
+
+//  HOOK 列表
+//      class   类名字
+//      init    初始化挂钩函数
+//      object  目标类对象
+//
+//  三个参数，class 和 init 均必须存在
+//      内部逻辑通过 class 来找到对应的对象
+//      然后调用 init 函数，传入对象
+//      最后内部自己设置相关的逻辑，然后退出
+//
+//  https://frida.re/docs/javascript-api/
+var module_function_android = [
+    { 'class': 'com.lenovo.nfsserver.prog.NFS3Prog', 'init': HookNFS3Prog, 'object' : null },
+    { 'class': 'com.lenovo.nfsserver.utils.LogUtils', 'init': OpenNFSServerDebugger, 'object' : null },
+    { 'class': '', 'init': null, 'object' : null }
+];
+
+
+function HookNFS3Prog(class_object){
+    let NFS3Prog = class_object;
+    NFS3Prog["procedureGETATTR"].implementation = function () {
+        console.log(`NFS3Prog.procedureGETATTR is called`);
+        this["procedureGETATTR"]();
+    };
+    /*
+    NFS3Prog["writeFattr3"].implementation = function (fileID, useCache) {
+        console.log(`NFS3Prog.writeFattr3 is called: fileID=${fileID} , useCache=${useCache}`);
+        this["writeFattr3"](fileID, useCache);
+    };
+    */
+}
+
+function OpenNFSServerDebugger(class_object){
+    let LogUtils = class_object;
+    console.log(`LogUtils is called : isDebug = ${LogUtils.isDebug.value}`);
+    LogUtils.isDebug.value = false;
+    console.log(`LogUtils is called : isDebug = ${LogUtils.isDebug.value}`);
+}
+
 
