@@ -12,14 +12,14 @@
 
 from __future__ import print_function
 
+import os
+import subprocess
 import tempfile
 
 import frida
 import sys
 
 '''
-# pip install frida-tools
-# pip install dissect.cstruct
 from dissect import cstruct
 
 # 加载解析结构体头文件
@@ -290,7 +290,7 @@ def OutputEngineError(message):
         print("message_description : ", message_description)
     if 'stack' in message:
         message_stack = message['stack']
-        print("message_stack : ", message_stack)
+        print("message_stack : \n" + message_stack)
     if 'fileName' in message:
         message_fileName = message['fileName']
         print("message_fileName : ", message_fileName)
@@ -380,11 +380,63 @@ def write_to_temp_file(content):
         return f.name
 
 
+def Install(path):
+    if path is not None and path != "":
+        adb_path = path
+        if len(adb_path.split(" ")) != 1:
+            adb_path = "\"" + adb_path + "\""
+    else:
+        return
+    print("adb path : ", adb_path)
+
+    current_dir = os.getcwd()
+    server_path = current_dir + "\\Bin\\fsarm64"
+    if len(current_dir.split(" ")) != 1:
+        server_path = "\"" + server_path + "\""
+    print("server path : ", server_path)
+
+    run_command = f"{adb_path} push {server_path} /data/local/tmp"
+    print("%s" % run_command)
+    os.system(run_command)
+    run_command = f"{adb_path} shell chmod 777 /data/local/tmp/fsarm64"
+    print("%s" % run_command)
+    os.system(run_command)
+    pass
+
+
+def RunServer(path):
+    # 输出结果
+    print("目前只支持配置环境，不支持内部启动")
+    print("用 root 权限，去设备里启动 /data/local/tmp/fsarm64 即可")
+    print("adb 路径 ：", path)
+    print("命令，按顺序敲：")
+    print("\tadb shell")
+    print("\tsu")
+    print("\t/data/local/tmp/fsarm64")
+
+
+def UninstallServer(path):
+    if path is not None and path != "":
+        adb_path = path
+        if len(adb_path.split(" ")) != 1:
+            adb_path = "\"" + adb_path + "\""
+    else:
+        return
+    print("adb path : ", adb_path)
+    run_command = f"{adb_path} shell rm /data/local/tmp/fsarm64"
+    print("%s" % run_command)
+    os.system(run_command)
+
+
 if __name__ == '__main__':
     if len(sys.argv) != 3:
         print("Usage: %s <os (windows/android)> <arges>" % __file__)
         print("Usage: %s windows <process name or PID>" % __file__)
         print("Usage: %s android <process name or PID>" % __file__)
+        print("Usage: %s install <adb path>" % __file__)
+        print("Usage: %s run <adb path>" % __file__)
+        print("Usage: %s uninstall <adb path>" % __file__)
+        print("只有调试 安卓 APP 时，才需要用到 install run uninstall 命令")
         sys.exit(1)
 
     try:
@@ -393,5 +445,11 @@ if __name__ == '__main__':
             RunWindows(sys.argv[2])
         elif os_platform.lower() == 'android':
             RunAndroid(sys.argv[2])
+        elif os_platform.lower() == 'install':
+            Install(sys.argv[2])
+        elif os_platform.lower() == 'run':
+            RunServer(sys.argv[2])
+        elif os_platform.lower() == 'uninstall':
+            UninstallServer(sys.argv[2])
     except Exception as e:
         print("Error: %s" % e)
