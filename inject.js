@@ -19,6 +19,7 @@
 //  唯一不确定的情况，是开启优化编译的情况下，当前模块的相关问题，参数是否能正确解析
 //  https://frida.re/docs/javascript-api/
 var module_function_windows = [
+/*
 {'global': {}, 'module': 'user32.dll', 'func': 'SetWindowTextA', 'pre': function (args) {
         //console.log('[+] Called SetWindowTextA');
         //for (var i = 0; i < 2; i++)
@@ -34,24 +35,91 @@ var module_function_windows = [
         //console.log('[+] Returned from SetWindowTextA : ' + return_value);
         //console.log('');
     } },
+*/
+/*
 {'global': {}, 'module': 'user32.dll', 'func': 'GetWindowTextA',
     'pre': function (args) {
         console.log('[+] Called GetWindowTextA');
         console.log('Context  : ' + JSON.stringify(this.context));
         //  保存输出参数地址
-        module_function[1].global[this.context.ebp] = args[1]
-        console.log('args[1]  : ' + module_function[1].global[this.context.ebp]);
+        module_function_windows[1].global[this.context.ebp] = args[1];
+        console.log('args[1]  : ' + module_function_windows[1].global[this.context.ebp]);
     },
     'post': function (return_value) {
         //  函数返回的时候，覆盖这个输出参数地址
-        console.log('args[1]  : ' + module_function[1].global[this.context.ebp]);
-        module_function[1].global[this.context.ebp].writeAnsiString("123456789");
+        console.log('args[1]  : ' + module_function_windows[1].global[this.context.ebp]);
+        module_function_windows[1].global[this.context.ebp].writeAnsiString("123456789");
         console.log('this     : ' + JSON.stringify(this));
         console.log('Context  : ' + JSON.stringify(this.context));
         console.log('[+] Returned from GetWindowTextA : ' + return_value);
         console.log('');
-        delete module_function[1].global[this.context.ebp];
+        delete module_function_windows[1].global[this.context.ebp];
     } },
+*/
+/*
+{'global': {}, 'module': 'GameAssembly.dll', 'offset': 0x014BDB90,
+	'pre': function (args) {
+        console.log('[+] call pre  UnityEngine.Input::GetKeyInt(UnityEngine.KeyCode)');
+        module_function_windows[1].global[this.context.ebp] = args[1];
+    },
+	'post': function (return_value) {
+		console.log('[+] call post UnityEngine.Input::GetKeyInt(UnityEngine.KeyCode)');
+        console.log('args[1]  : ' + module_function_windows[1].global[this.context.ebp]);
+        console.log('return_value : ' + return_value);
+	} },
+*/
+{'global': {}, 'module': 'GameAssembly.dll', 'offset': 0x014BDB50,
+	'pre': function (args) {
+        //console.log('[+] call pre  UnityEngine.Input::GetKeyDownInt(UnityEngine.KeyCode)');
+        module_function_windows[1].global[this.context.ebp] = this.context.rcx;
+    },
+	'post': function (return_value) {
+		if (return_value == 0) {
+			return;
+		}
+		console.log('[+] call post UnityEngine.Input::GetKeyDownInt(UnityEngine.KeyCode)');
+        console.log('args[1]  : ' + module_function_windows[1].global[this.context.ebp]);
+        console.log('return_value : ' + return_value);
+	} },
+{'global': {}, 'module': 'GameAssembly.dll', 'offset': 0x014BDBD0,
+	'pre': function (args) {
+        //console.log('[+] call pre  UnityEngine.Input::GetKeyUpInt(UnityEngine.KeyCode)');
+        module_function_windows[1].global[this.context.ebp] = this.context.rcx;
+    },
+	'post': function (return_value) {
+		if (return_value == 0) {
+			return;
+		}
+		console.log('[+] call post UnityEngine.Input::GetKeyUpInt(UnityEngine.KeyCode)');
+        console.log('args[1]  : ' + module_function_windows[1].global[this.context.ebp]);
+        console.log('return_value : ' + return_value);
+	} },
+{'global': {}, 'module': 'GameAssembly.dll', 'offset': 0x014BDCC0,
+	'pre': function (args) {
+        //console.log('[+] call pre  UnityEngine.Input::GetMouseButtonDown(UnityEngine.KeyCode)');
+        module_function_windows[1].global[this.context.ebp] = this.context.rcx;
+    },
+	'post': function (return_value) {
+		if (return_value == 0) {
+			return;
+		}
+		console.log('[+] call post UnityEngine.Input::GetMouseButtonDown(UnityEngine.KeyCode)');
+        console.log('args[1]  : ' + module_function_windows[1].global[this.context.ebp]);
+        console.log('return_value : ' + return_value);
+	} },
+{'global': {}, 'module': 'GameAssembly.dll', 'offset': 0x014BDD00,
+	'pre': function (args) {
+        //console.log('[+] call pre  UnityEngine.Input::GetMouseButtonUp(UnityEngine.KeyCode)');
+        module_function_windows[1].global[this.context.ebp] = this.context.rcx;
+    },
+	'post': function (return_value) {
+		if (return_value == 0) {
+			return;
+		}
+		console.log('[+] call post UnityEngine.Input::GetMouseButtonUp(UnityEngine.KeyCode)');
+        console.log('args[1]  : ' + module_function_windows[1].global[this.context.ebp]);
+        console.log('return_value : ' + return_value);
+	} },
 {'global': {}, 'module': '', 'address': 0, 'pre': null, 'post': null},
 {'global': {}, 'module': '', 'offset': 0, 'pre': null, 'post': null},
 {'global': {}, 'module': '', 'func': '', 'pre': null, 'post': null}
@@ -96,4 +164,15 @@ function OpenNFSServerDebugger(class_object){
     console.log(`LogUtils is called : isDebug = ${LogUtils.isDebug.value}`);
 }
 
-
+function DllInject(file_path) {
+	const loadLibrary = new NativeFunction(Module.findExportByName("kernel32.dll", "LoadLibraryA"), 'pointer', ['pointer']);
+	var myLibAddr = loadLibrary(file_path);
+	if (myLibAddr == null)
+	{
+    	console.log(`Inject error = ${file_path}`);
+	}
+	else
+	{
+    	console.log(`Inject success = ${file_path}`);
+	}
+}

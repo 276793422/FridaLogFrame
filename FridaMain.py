@@ -140,6 +140,7 @@ function NotifyRemotePythonPayload(payload) {
 
 JsShell_Windows = JsShell_Base + """
 function CreateHijackWindows() {
+    console.log('->');
     for (var i in module_function_windows) {
         var node = module_function_windows[i]
         var baseAddr = 0
@@ -154,20 +155,24 @@ function CreateHijackWindows() {
             methodAddr = node.address;
         } else {
             //  如果模块不为空，先取模块地址
-            baseAddr = Module.findBaseAddress(node.module);
             if (node.func != undefined && node.func != null && node.func != '') {
                 //  如果函数名存在，并且有效，拿函数名作为地址
                 methodAddr = Module.getExportByName(node.module, node.func);
             } else if (node.offset != undefined && node.offset != 0) {
                 //  如果函数名不存在，但是偏移存在，则直接取模块地址加偏移
-                methodAddr = baseAddr + node.offset;
+                //baseAddr = Module.findBaseAddress(node.module);
+                //baseAddr = parseInt(baseAddr);
+                //methodAddr = baseAddr + node.offset;
+                //console.log(node.module + ' baseAddr: ' + baseAddr.toString(16) + ' : ' + baseAddr);
+                var module = Process.getModuleByName(node.module);
+                var addr = module.base.add(node.offset);
+                methodAddr = new NativePointer(addr.toString());
             } else {
                 //  如果函数名和偏移都不在，结束
                 continue;
             }
-            console.log(node.module + ' baseAddr: ' + baseAddr);
         }
-        
+            
         var pre_callback = node.pre;
         var post_callback = node.post;
         
@@ -175,22 +180,29 @@ function CreateHijackWindows() {
             continue;
         }
         
-        console.log('SendRequest at: ' + methodAddr);
-        
         if (pre_callback == null) {
-            pre_callback = function (args) {
+                pre_callback = function (args) {
             }
         }
         
         if (post_callback == null) {
-            post_callback = function (retval) {
+                post_callback = function (retval) {
             }
         }
-
+        console.log('attach : ' + typeof methodAddr + ' : ' + methodAddr.toString(16) + ' : ' + methodAddr);
+        if (methodAddr == NaN) {
+            constole.log('attach error');
+            continue;
+        }
         Interceptor.attach(methodAddr, { onEnter: pre_callback, onLeave: post_callback } );
     }
 }
 CreateHijackWindows();
+
+
+
+
+
 
 
 
@@ -316,6 +328,7 @@ def RunWindows(args):
     session = frida.attach(target_process)
     with open("inject.js") as f:
         js_script = f.read() + JsShell_Windows
+        print("script ======> ", write_to_temp_file(js_script))
         script = session.create_script(js_script)
         script.on('message', on_message)
         script.load()
