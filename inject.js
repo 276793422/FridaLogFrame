@@ -68,6 +68,8 @@ var module_function_windows = [
         console.log('return_value : ' + return_value);
 	} },
 */
+
+
 {'global': {}, 'module': 'GameAssembly.dll', 'offset': 0x014BDB50,
 	'pre': function (args) {
         //console.log('[+] call pre  UnityEngine.Input::GetKeyDownInt(UnityEngine.KeyCode)');
@@ -77,9 +79,12 @@ var module_function_windows = [
 		if (return_value == 0) {
 			return;
 		}
-		console.log('[+] call post UnityEngine.Input::GetKeyDownInt(UnityEngine.KeyCode)');
-        console.log('args[1]  : ' + module_function_windows[1].global[this.context.ebp]);
-        console.log('return_value : ' + return_value);
+		console.log('  -->');
+		console.log(GetCurrentTime() + '[+] call post UnityEngine.Input::GetKeyDownInt(UnityEngine.KeyCode)');
+		var key = module_function_windows[1].global[this.context.ebp];
+        console.log('args[1]  : ' + key + ' >>>> return_value : ' + return_value);
+        if (key == 0x64) return_value.replace(0x1);
+        if (key == 0x77) return_value.replace(0x1);
 	} },
 {'global': {}, 'module': 'GameAssembly.dll', 'offset': 0x014BDBD0,
 	'pre': function (args) {
@@ -90,10 +95,15 @@ var module_function_windows = [
 		if (return_value == 0) {
 			return;
 		}
-		console.log('[+] call post UnityEngine.Input::GetKeyUpInt(UnityEngine.KeyCode)');
-        console.log('args[1]  : ' + module_function_windows[1].global[this.context.ebp]);
-        console.log('return_value : ' + return_value);
+		console.log('  ==>');
+		console.log(GetCurrentTime() + '[+] call post UnityEngine.Input::GetKeyUpInt(UnityEngine.KeyCode)');
+		var key = module_function_windows[1].global[this.context.ebp];
+        console.log('args[1]  : ' + key + ' >>>> return_value : ' + return_value);
+        if (key == 0x77) return_value.replace(0x1);
 	} },
+
+
+/*
 {'global': {}, 'module': 'GameAssembly.dll', 'offset': 0x014BDCC0,
 	'pre': function (args) {
         //console.log('[+] call pre  UnityEngine.Input::GetMouseButtonDown(UnityEngine.KeyCode)');
@@ -104,7 +114,8 @@ var module_function_windows = [
 			return;
 		}
 		console.log('[+] call post UnityEngine.Input::GetMouseButtonDown(UnityEngine.KeyCode)');
-        console.log('args[1]  : ' + module_function_windows[1].global[this.context.ebp]);
+		//console.log("\nBacktrace:\n" + Thread.backtrace(this.context, Backtracer.ACCURATE).map(DebugSymbol.fromAddress).join("\n"));
+        //console.log('args[1]  : ' + module_function_windows[1].global[this.context.ebp]);
         console.log('return_value : ' + return_value);
 	} },
 {'global': {}, 'module': 'GameAssembly.dll', 'offset': 0x014BDD00,
@@ -120,6 +131,47 @@ var module_function_windows = [
         console.log('args[1]  : ' + module_function_windows[1].global[this.context.ebp]);
         console.log('return_value : ' + return_value);
 	} },
+{'global': {}, 'module': 'GameAssembly.dll', 'offset': 0x01497BA0,
+	'pre': function (args) {
+        //console.log('[+] call pre  UnityEngine.Input::GetMouseButtonUp(UnityEngine.KeyCode)');
+        module_function_windows[1].global[this.context.ebp] = this.context.rcx;
+    },
+	'post': function (return_value) {
+		if (return_value == 0) {
+			return;
+		}
+		console.log('[+] call post LoadSceneAsyncNameIndexInternal_Injected 1');
+        console.log('args[1]  : ' + module_function_windows[1].global[this.context.ebp]);
+        console.log('return_value : ' + return_value);
+	} },
+{'global': {}, 'module': 'GameAssembly.dll', 'offset': 0x01497C10,
+	'pre': function (args) {
+        //console.log('[+] call pre  UnityEngine.Input::GetMouseButtonUp(UnityEngine.KeyCode)');
+        module_function_windows[1].global[this.context.ebp] = this.context.rcx;
+    },
+	'post': function (return_value) {
+		if (return_value == 0) {
+			return;
+		}
+		console.log('[+] call post LoadSceneAsyncNameIndexInternal_Injected 2');
+        console.log('args[1]  : ' + module_function_windows[1].global[this.context.ebp]);
+        console.log('return_value : ' + return_value);
+	} },
+{'global': {}, 'module': 'GameAssembly.dll', 'offset': 0x01497C70,
+	'pre': function (args) {
+        //console.log('[+] call pre  UnityEngine.Input::GetMouseButtonUp(UnityEngine.KeyCode)');
+        module_function_windows[1].global[this.context.ebp] = this.context.rcx;
+    },
+	'post': function (return_value) {
+		if (return_value == 0) {
+			return;
+		}
+		console.log('[+] call post LoadSceneAsyncNameIndexInternal_Injected 3');
+        console.log('args[1]  : ' + module_function_windows[1].global[this.context.ebp]);
+        console.log('return_value : ' + return_value);
+	} },
+*/
+
 {'global': {}, 'module': '', 'address': 0, 'pre': null, 'post': null},
 {'global': {}, 'module': '', 'offset': 0, 'pre': null, 'post': null},
 {'global': {}, 'module': '', 'func': '', 'pre': null, 'post': null}
@@ -175,4 +227,17 @@ function DllInject(file_path) {
 	{
     	console.log(`Inject success = ${file_path}`);
 	}
+}
+
+function GetCurrentTime() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = (now.getMonth() + 1).toString().padStart(2, '0');
+  const day = now.getDate().toString().padStart(2, '0');
+  const hours = now.getHours().toString().padStart(2, '0');
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  const seconds = now.getSeconds().toString().padStart(2, '0');
+  const milliseconds = now.getMilliseconds().toString().padStart(3, '0');
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`;
 }
