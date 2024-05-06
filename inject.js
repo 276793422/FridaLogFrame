@@ -19,7 +19,36 @@
 //  唯一不确定的情况，是开启优化编译的情况下，当前模块的相关问题，参数是否能正确解析
 //  https://frida.re/docs/javascript-api/
 var module_function_windows = [
-/*
+/******************************************************************************
+//  CreateFileW 示例
+{'global': {}, 'module': 'kernelbase.dll', 'func': 'CreateFileW',
+    //  https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi
+    //  https://docs.microsoft.com/en-us/windows/win32/fileio/creating-and-opening-files
+    //  后三个参数可能不正确，因为这里没有用标准方式取后三个参数
+    'pre': function (args) {
+        console.log('[+] Called CreateFileW');
+        console.log('\t arg 1 addr : ' + this.context.rcx);
+        console.log('\t arg 1 : ' + UnicodeByteToString(this.context.rcx));
+        console.log('\t arg 2 : ' + this.context.rdx);
+        console.log('\t arg 3 : ' + this.context.r8);
+        console.log('\t arg 4 : ' + this.context.r9);
+        console.log('\t arg 5 : ' + this.context.r12);
+        console.log('\t arg 6 : ' + this.context.rdi);
+        console.log('\t arg 7 : ' + this.context.r13);
+        //  保存输出参数地址
+        module_function_windows[1].global[this.context.ebp] = this.context.rcx
+    },
+    'post': function (return_value) {
+        //  函数返回的时候，覆盖这个输出参数地址
+        console.log('\r ---->');
+        console.log('\t arg 1 : ' + module_function_windows[1].global[this.context.ebp]);
+        console.log('[+] Returned from CreateFileW : ' + return_value);
+        console.log('');
+        delete module_function_windows[1].global[this.context.ebp];
+    } },
+******************************************************************************/
+
+/******************************************************************************
 {'global': {}, 'module': 'user32.dll', 'func': 'SetWindowTextA', 'pre': function (args) {
         //console.log('[+] Called SetWindowTextA');
         //for (var i = 0; i < 2; i++)
@@ -35,8 +64,10 @@ var module_function_windows = [
         //console.log('[+] Returned from SetWindowTextA : ' + return_value);
         //console.log('');
     } },
-*/
-/*
+******************************************************************************/
+
+/******************************************************************************
+//  GetWindowTextA 劫持返回值示例
 {'global': {}, 'module': 'user32.dll', 'func': 'GetWindowTextA',
     'pre': function (args) {
         console.log('[+] Called GetWindowTextA');
@@ -55,7 +86,8 @@ var module_function_windows = [
         console.log('');
         delete module_function_windows[1].global[this.context.ebp];
     } },
-*/
+******************************************************************************/
+
 /*
 {'global': {}, 'module': 'GameAssembly.dll', 'offset': 0x014BDB90,
 	'pre': function (args) {
@@ -69,7 +101,7 @@ var module_function_windows = [
 	} },
 */
 
-
+/*
 {'global': {}, 'module': 'GameAssembly.dll', 'offset': 0x014BDB50,
 	'pre': function (args) {
         //console.log('[+] call pre  UnityEngine.Input::GetKeyDownInt(UnityEngine.KeyCode)');
@@ -101,7 +133,7 @@ var module_function_windows = [
         console.log('args[1]  : ' + key + ' >>>> return_value : ' + return_value);
         if (key == 0x77) return_value.replace(0x1);
 	} },
-
+*/
 
 /*
 {'global': {}, 'module': 'GameAssembly.dll', 'offset': 0x014BDCC0,
@@ -172,6 +204,7 @@ var module_function_windows = [
 	} },
 */
 
+//  HOOK 示例
 {'global': {}, 'module': '', 'address': 0, 'pre': null, 'post': null},
 {'global': {}, 'module': '', 'offset': 0, 'pre': null, 'post': null},
 {'global': {}, 'module': '', 'func': '', 'pre': null, 'post': null}
@@ -189,55 +222,30 @@ var module_function_windows = [
 //
 //  https://frida.re/docs/javascript-api/
 var module_function_android = [
-    { 'class': 'com.lenovo.nfsserver.prog.NFS3Prog', 'init': HookNFS3Prog, 'object' : null },
-    { 'class': 'com.lenovo.nfsserver.utils.LogUtils', 'init': OpenNFSServerDebugger, 'object' : null },
+    { 'class': 'com.lenovo.nfsserver.prog.NFS3Prog',
+        'init': function (class_object) {
+            let NFS3Prog = class_object;
+            NFS3Prog["procedureGETATTR"].implementation = function () {
+                console.log(`NFS3Prog.procedureGETATTR is called`);
+                this["procedureGETATTR"]();
+            };
+            /*
+            NFS3Prog["writeFattr3"].implementation = function (fileID, useCache) {
+                console.log(`NFS3Prog.writeFattr3 is called: fileID=${fileID} , useCache=${useCache}`);
+                this["writeFattr3"](fileID, useCache);
+            };
+            */
+        } , 'object' : null },
+    { 'class': 'com.lenovo.nfsserver.utils.LogUtils',
+        'init': function (class_object){
+            let LogUtils = class_object;
+            console.log(`LogUtils is called : isDebug = ${LogUtils.isDebug.value}`);
+            LogUtils.isDebug.value = false;
+            console.log(`LogUtils is called : isDebug = ${LogUtils.isDebug.value}`);
+        }, 'object' : null },
     { 'class': '', 'init': null, 'object' : null }
 ];
 
-
-function HookNFS3Prog(class_object){
-    let NFS3Prog = class_object;
-    NFS3Prog["procedureGETATTR"].implementation = function () {
-        console.log(`NFS3Prog.procedureGETATTR is called`);
-        this["procedureGETATTR"]();
-    };
-    /*
-    NFS3Prog["writeFattr3"].implementation = function (fileID, useCache) {
-        console.log(`NFS3Prog.writeFattr3 is called: fileID=${fileID} , useCache=${useCache}`);
-        this["writeFattr3"](fileID, useCache);
-    };
-    */
-}
-
-function OpenNFSServerDebugger(class_object){
-    let LogUtils = class_object;
-    console.log(`LogUtils is called : isDebug = ${LogUtils.isDebug.value}`);
-    LogUtils.isDebug.value = false;
-    console.log(`LogUtils is called : isDebug = ${LogUtils.isDebug.value}`);
-}
-
-function DllInject(file_path) {
-	const loadLibrary = new NativeFunction(Module.findExportByName("kernel32.dll", "LoadLibraryA"), 'pointer', ['pointer']);
-	var myLibAddr = loadLibrary(file_path);
-	if (myLibAddr == null)
-	{
-    	console.log(`Inject error = ${file_path}`);
-	}
-	else
-	{
-    	console.log(`Inject success = ${file_path}`);
-	}
-}
-
-function GetCurrentTime() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = (now.getMonth() + 1).toString().padStart(2, '0');
-  const day = now.getDate().toString().padStart(2, '0');
-  const hours = now.getHours().toString().padStart(2, '0');
-  const minutes = now.getMinutes().toString().padStart(2, '0');
-  const seconds = now.getSeconds().toString().padStart(2, '0');
-  const milliseconds = now.getMilliseconds().toString().padStart(3, '0');
-
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`;
-}
+//  Dll 注入示例
+var inj = RunInjectDll("D:\\TestDir\\VS2022\\VS2022Test\\x64\\Release\\Test054_DllInjectDll.dll", true);
+console.log('inject = ' + inj);

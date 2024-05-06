@@ -39,7 +39,23 @@ cstruct.dumpstruct(result)
 
 '''
 
+# JS 需要的一些内部库函数
 JsShell_Base = """
+//  获取当前时间，返回字符串，精确到毫秒
+function GetCurrentTime() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = (now.getMonth() + 1).toString().padStart(2, '0');
+  const day = now.getDate().toString().padStart(2, '0');
+  const hours = now.getHours().toString().padStart(2, '0');
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  const seconds = now.getSeconds().toString().padStart(2, '0');
+  const milliseconds = now.getMilliseconds().toString().padStart(3, '0');
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`;
+}
+
+//  将字符数组转化成字符串
 function ByteToString(arr) {
     if(typeof arr === 'string') {
         return arr;
@@ -64,6 +80,7 @@ function ByteToString(arr) {
     return str;
 }
 
+//  将UTF-8编码的字符串转成Unicode编码字符串
 function Utf8ByteToUnicodeStr(utf8Bytes){
     var unicodeStr ="";
     for (var pos = 0; pos < utf8Bytes.length;){
@@ -121,6 +138,11 @@ function Utf8ByteToUnicodeStr(utf8Bytes){
     return unicodeStr;
 }
 
+//  将Unicode编码的字符串转成字符串
+function UnicodeByteToString(text) {
+    return Memory.readUtf16String(text);
+};
+
 //  把数据发回给远程 Python
 function NotifyRemotePythonInformation(payload, data_point, data_length) {
     if (data_point.isNull())
@@ -129,16 +151,47 @@ function NotifyRemotePythonInformation(payload, data_point, data_length) {
     send(payload, buf);
 }
 
+//  把数据发回给远程 Python，发送一个普通的 paylaod
 function NotifyRemotePythonPayload(payload) {
     send(payload, '');
 }
 
-
+var function_list = {
+    'RunInjectDll' : RunInjectDll,
+    'GetCurrentTime' : GetCurrentTime,
+    'Null' : null
+};
 
 
 """
 
+# Windows 部分组件相关所需库函数，以及框架代码
 JsShell_Windows = JsShell_Base + """
+
+//  加载指定DLL，执行相关内容
+//  dll_path : 指定DLL路径
+//  要求dll主函数快速退出，否则影响后续功能
+function RunInjectDll(dll_path, unload = false) {
+    let loadLibrary = new NativeFunction(Module.findExportByName("kernel32.dll", "LoadLibraryA"), 'pointer', ['pointer']);
+    console.log(`Get Function LoadLibraryA = ${loadLibrary}`);
+    let freeLibrary = new NativeFunction(Module.findExportByName("kernel32.dll", "FreeLibrary"), 'pointer', ['pointer']);
+    console.log(`Get Function FreeLibrary = ${freeLibrary}`);
+    let dllStr = Memory.allocUtf8String(dll_path);
+    var myLibAddr = loadLibrary(dllStr);
+    if (myLibAddr == 0) {
+        console.log(`LoadLibraryA Call Error`);
+        return false;
+    } else {
+        console.log(`LoadLibraryA Call Success = ${myLibAddr}`);
+        if (unload == true) {
+            var vBool = freeLibrary(myLibAddr);
+            console.log(`unload = true, FreeLibrary = ${vBool} : ${myLibAddr} : ${dll_path}`);
+        }
+        return true;
+    }
+}
+
+//  注册 Windows 部分所有拦截点
 function CreateHijackWindows() {
     console.log('->');
     for (var i in module_function_windows) {
@@ -197,19 +250,26 @@ function CreateHijackWindows() {
         Interceptor.attach(methodAddr, { onEnter: pre_callback, onLeave: post_callback } );
     }
 }
+
 CreateHijackWindows();
-
-
-
-
-
-
 
 
 
 """
 
+# Android 部分组件相关所需库函数，以及框架代码
 JsShell_Android = JsShell_Base + """
+
+//  加载指定DLL，执行相关内容
+//  dll_path : 指定DLL路径
+//  要求dll主函数快速退出，否则影响后续功能
+function RunInjectDll(dll_path, unload = false) {
+    //  安卓侧目前不支持注入模块
+    console.log(`not support in Android = ${loadLibrary}`);
+    return false;
+}
+
+//  有针对性地一个点一个点做劫持点初始化，初始化函数内部一个点一个点判断是否是自己需要的劫持点
 function CallHookFunction(class_name, class_object) {
     for (var i in module_function_android) {
         var node = module_function_android[i]
@@ -231,6 +291,7 @@ function CallHookFunction(class_name, class_object) {
     }
 }
 
+//  这里通过枚举方式获取对应函数并且劫持，直接Query 的方式大概率失败
 function EnumPackageNameObject(class_name) {
     Java.perform(
         function(){
@@ -242,9 +303,9 @@ function EnumPackageNameObject(class_name) {
                         // console.log(Java.ClassFactory)
                         var factory = Java.ClassFactory.get(instance)
                         try{
-                            var NFS3ProgClass = factory.use(class_name)
-                            if (NFS3ProgClass != null) {
-                                CallHookFunction(class_name, NFS3ProgClass)
+                            var varClassObject = factory.use(class_name)
+                            if (varClassObject != null) {
+                                CallHookFunction(class_name, varClassObject)
                                 return "stop"
                             }
                         }catch(e){
@@ -259,6 +320,7 @@ function EnumPackageNameObject(class_name) {
     )
 }
 
+// 注册Android 部分所有劫持点
 function CreateHijackAndroid() {
     for (var i in module_function_android) {
         var node = module_function_android[i]
@@ -277,6 +339,13 @@ function CreateHijackAndroid() {
 }
 
 CreateHijackAndroid();
+
+
+
+
+
+
+
 
 """
 
@@ -428,7 +497,7 @@ def UninstallServer(path):
     os.system(run_command)
 
 
-if __name__ == '__main__':
+def Main():
     if len(sys.argv) != 3:
         print("Usage: %s <os (windows/android)> <arges>" % __file__)
         print("Usage: %s windows <process name or PID>" % __file__)
@@ -453,3 +522,7 @@ if __name__ == '__main__':
             UninstallServer(sys.argv[2])
     except Exception as e:
         print("Error: %s" % e)
+
+
+if __name__ == '__main__':
+    Main()
