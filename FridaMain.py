@@ -193,7 +193,6 @@ function RunInjectDll(dll_path, unload = false) {
 
 //  注册 Windows 部分所有拦截点
 function CreateHijackWindows() {
-    console.log('->');
     for (var i in module_function_windows) {
         var node = module_function_windows[i]
         var baseAddr = 0
@@ -251,7 +250,8 @@ function CreateHijackWindows() {
     }
 }
 
-CreateHijackWindows();
+//CreateHijackWindows();
+
 
 
 
@@ -338,12 +338,45 @@ function CreateHijackAndroid() {
     }
 }
 
-CreateHijackAndroid();
+//CreateHijackAndroid();
 
 
 
 
 
+
+
+
+"""
+
+
+# 总入口，以及框架代码
+JsShell_Entry = """
+function RunCreateHijack(system_env) {
+    console.log('==========');
+    if (module_run_event.pre != null) {
+        module_run_event.pre(system_env);
+    }
+    
+    console.log('----------');
+    if (system_env.system_type == 'windows') {
+        CreateHijackWindows(system_env);
+    }
+    else if (system_env.system_type == 'android') {
+        CreateHijackAndroid(system_env);
+    }
+    else {
+        console.log('current system not support');
+    }
+    console.log('----------');
+    
+    if (module_run_event.post != null) {
+        module_run_event.post(system_env);
+    }
+    console.log('==========');
+}
+
+RunCreateHijack(run_system_env);
 
 
 
@@ -388,15 +421,28 @@ def on_message(message, data):
         print("   data : ", data)
 
 
+def MakeJsShellEnv(system_type):
+    system_env_array = [
+        "var run_system_env = {",
+        "    'system_type' : '%s'," % system_type,
+        "};",
+    ]
+    system_env = ""
+    for item in system_env_array:
+        system_env += item + "\n"
+    return system_env
+
+
 def RunWindows(args):
     try:
         target_process = int(args)
     except ValueError:
         target_process = args
 
+    js_shell_env = MakeJsShellEnv('windows')
     session = frida.attach(target_process)
     with open("inject.js") as f:
-        js_script = f.read() + JsShell_Windows
+        js_script = f.read() + JsShell_Windows + JsShell_Android + js_shell_env + JsShell_Entry
         print("script ======> ", write_to_temp_file(js_script))
         script = session.create_script(js_script)
         script.on('message', on_message)
@@ -404,6 +450,7 @@ def RunWindows(args):
         print("[!] Ctrl+D on UNIX, Ctrl+Z on Windows/cmd.exe to detach from instrumented program.\n\n")
         RunWaitCommand()
         session.detach()
+    pass
 
 
 def RunAndroid(args):
@@ -412,10 +459,12 @@ def RunAndroid(args):
     # device.resume(pid)
     # session = device.attach(pid)
 
+    js_shell_env = MakeJsShellEnv('android')
+
     device = frida.get_usb_device()
     session = device.attach(args)
     with open("inject.js") as f:
-        js_script = f.read() + JsShell_Android
+        js_script = f.read() + JsShell_Windows + JsShell_Android + js_shell_env + JsShell_Entry
         print("script ======> ", write_to_temp_file(js_script))
         script = session.create_script(js_script)
         script.on('message', on_message)

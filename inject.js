@@ -66,7 +66,7 @@ var module_function_windows = [
     } },
 ******************************************************************************/
 
-/******************************************************************************
+///******************************************************************************
 //  GetWindowTextA 劫持返回值示例
 {'global': {}, 'module': 'user32.dll', 'func': 'GetWindowTextA',
     'pre': function (args) {
@@ -86,7 +86,7 @@ var module_function_windows = [
         console.log('');
         delete module_function_windows[1].global[this.context.ebp];
     } },
-******************************************************************************/
+//******************************************************************************/
 
 /*
 {'global': {}, 'module': 'GameAssembly.dll', 'offset': 0x014BDB90,
@@ -246,6 +246,16 @@ var module_function_android = [
     { 'class': '', 'init': null, 'object' : null }
 ];
 
-//  Dll 注入示例
-var inj = RunInjectDll("D:\\TestDir\\VS2022\\VS2022Test\\x64\\Release\\Test054_DllInjectDll.dll", true);
-console.log('inject = ' + inj);
+
+var module_run_event = {
+    'pre' : function (system_env) {
+        console.log(`call module run event pre  : ${system_env.system_type}`);
+    },
+    'post' : function (system_env) {
+        console.log(`call module run event post : ${system_env.system_type}`);
+        //  Dll 注入示例
+        //var inj = RunInjectDll("D:\\TestDir\\VS2022\\VS2022Test\\x64\\Release\\Test054_DllInjectDll.dll", true);
+        //console.log('inject = ' + inj);
+    }
+};
+
