@@ -286,6 +286,7 @@ function CallHookFunction(class_name, class_object) {
             continue;
         }
 
+        console.log('        Init Save Object : ' + class_object)
         module_function_android[i].object = class_object;
         node.init(class_object);
     }
@@ -300,11 +301,11 @@ function EnumPackageNameObject(class_name) {
                 {
                     onMatch: function(instance){
                         // console.log(instance)
-                        // console.log(Java.ClassFactory)
                         var factory = Java.ClassFactory.get(instance)
                         try{
                             var varClassObject = factory.use(class_name)
                             if (varClassObject != null) {
+                                console.log('    Find Class : ' + class_name)
                                 CallHookFunction(class_name, varClassObject)
                                 return "stop"
                             }
