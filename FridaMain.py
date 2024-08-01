@@ -242,8 +242,8 @@ function CreateHijackWindows() {
             }
         }
         console.log('attach : ' + typeof methodAddr + ' : ' + methodAddr.toString(16) + ' : ' + methodAddr);
-        if (methodAddr == NaN) {
-            constole.log('attach error');
+        if (methodAddr == null) {
+            console.log('attach error');
             continue;
         }
         Interceptor.attach(methodAddr, { onEnter: pre_callback, onLeave: post_callback } );
