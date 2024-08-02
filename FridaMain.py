@@ -165,8 +165,29 @@ var function_list = {
 
 """
 
+JsShell_Frida = JsShell_Base + """
+
+//  获取指定key 的成员，方法有点笨
+function GetContext(obj, key) {
+    for (let i = 0; i < obj.length; i++) {
+        if (obj[i].hasOwnProperty('key')) {
+            if (obj[i].key == key) {
+                return obj[i];
+            }
+        }
+    }
+    return null;
+}
+
+//  把内存 dump 输出
+function OutputBuffer(buffer, _offset, _length) {
+    return hexdump(buffer, {offset : Number(_offset), length : Number(_length)});
+}
+
+"""
+
 # Windows 部分组件相关所需库函数，以及框架代码
-JsShell_Windows = JsShell_Base + """
+JsShell_Windows = JsShell_Frida + """
 
 //  加载指定DLL，执行相关内容
 //  dll_path : 指定DLL路径
@@ -258,7 +279,7 @@ function CreateHijackWindows() {
 """
 
 # Android 部分组件相关所需库函数，以及框架代码
-JsShell_Android = JsShell_Base + """
+JsShell_Android = JsShell_Frida + """
 
 //  加载指定DLL，执行相关内容
 //  dll_path : 指定DLL路径
