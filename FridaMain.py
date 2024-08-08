@@ -371,7 +371,6 @@ function CreateHijackAndroid() {
 
 """
 
-
 # 总入口，以及框架代码
 JsShell_Entry = """
 function RunCreateHijack(system_env) {
@@ -405,7 +404,7 @@ RunCreateHijack(run_system_env);
 """
 
 
-def OutputEngineError(message):
+def output_engine_error(message):
     if 'type' in message:
         message_type = message['type']
         print("message_type : ", message_type)
@@ -416,14 +415,14 @@ def OutputEngineError(message):
         message_stack = message['stack']
         print("message_stack : \n" + message_stack)
     if 'fileName' in message:
-        message_fileName = message['fileName']
-        print("message_fileName : ", message_fileName)
+        message_file_name = message['fileName']
+        print("message_fileName : ", message_file_name)
     if 'lineNumber' in message:
-        message_lineNumber = message['lineNumber']
-        print("message_lineNumber : ", message_lineNumber)
+        message_line_number = message['lineNumber']
+        print("message_lineNumber : ", message_line_number)
     if 'columnNumber' in message:
-        message_columnNumber = message['columnNumber']
-        print("message_columnNumber : ", message_columnNumber)
+        message_column_number = message['columnNumber']
+        print("message_columnNumber : ", message_column_number)
 
     return True
 
@@ -436,7 +435,7 @@ def on_message(message, data):
             message_type = message['type']
 
             if message_type == 'error':
-                bool_value = OutputEngineError(message)
+                bool_value = output_engine_error(message)
 
     if bool_value is False:
         print("message : ", message)
@@ -455,7 +454,7 @@ def MakeJsShellEnv(system_type):
     return system_env
 
 
-def RunWindows(args):
+def run_windows(args):
     try:
         target_process = int(args)
     except ValueError:
@@ -470,12 +469,12 @@ def RunWindows(args):
         script.on('message', on_message)
         script.load()
         print("[!] Ctrl+D on UNIX, Ctrl+Z on Windows/cmd.exe to detach from instrumented program.\n\n")
-        RunWaitCommand()
+        run_wait_command()
         session.detach()
     pass
 
 
-def RunAndroid(args):
+def run_android(args):
     # device = frida.get_usb_device()
     # pid = device.spawn([args])
     # device.resume(pid)
@@ -492,12 +491,12 @@ def RunAndroid(args):
         script.on('message', on_message)
         script.load()
         print("[!] Ctrl+D on UNIX, Ctrl+Z on Windows/cmd.exe to detach from instrumented program.\n\n")
-        RunWaitCommand()
+        run_wait_command()
         session.detach()
     pass
 
 
-def RunWaitCommand():
+def run_wait_command():
     while True:
         try:
             cmd = sys.stdin.read()
@@ -520,7 +519,7 @@ def write_to_temp_file(content):
         return f.name
 
 
-def Install(path):
+def android_install_server(path):
     if path is not None and path != "":
         adb_path = path
         if len(adb_path.split(" ")) != 1:
@@ -544,7 +543,7 @@ def Install(path):
     pass
 
 
-def RunServer(path):
+def android_run_server(path):
     # 输出结果
     print("目前只支持配置环境，不支持内部启动")
     print("用 root 权限，去设备里启动 /data/local/tmp/fsarm64 即可")
@@ -555,7 +554,7 @@ def RunServer(path):
     print("\t/data/local/tmp/fsarm64")
 
 
-def UninstallServer(path):
+def android_uninstall_server(path):
     if path is not None and path != "":
         adb_path = path
         if len(adb_path.split(" ")) != 1:
@@ -582,15 +581,15 @@ def Main():
     try:
         os_platform = sys.argv[1]
         if os_platform.lower() == 'windows':
-            RunWindows(sys.argv[2])
+            run_windows(sys.argv[2])
         elif os_platform.lower() == 'android':
-            RunAndroid(sys.argv[2])
+            run_android(sys.argv[2])
         elif os_platform.lower() == 'install':
-            Install(sys.argv[2])
+            android_install_server(sys.argv[2])
         elif os_platform.lower() == 'run':
-            RunServer(sys.argv[2])
+            android_run_server(sys.argv[2])
         elif os_platform.lower() == 'uninstall':
-            UninstallServer(sys.argv[2])
+            android_uninstall_server(sys.argv[2])
     except Exception as e:
         print("Error: %s" % e)
 
