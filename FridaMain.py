@@ -218,6 +218,9 @@ function CreateHijackWindows() {
         var node = module_function_windows[i]
         var baseAddr = 0
         var methodAddr = 0
+        if (node.enable != true) {
+            continue;
+        }
         if (node.module == '') {
             if (node.address == undefined || node.address == 0) {
                 //  如果模块名不存在，地址又是空，不管了
@@ -272,9 +275,6 @@ function CreateHijackWindows() {
 }
 
 //CreateHijackWindows();
-
-
-
 
 """
 
@@ -463,7 +463,7 @@ def run_windows(args):
     js_shell_env = MakeJsShellEnv('windows')
     session = frida.attach(target_process)
     with open("inject.js") as f:
-        js_script = f.read() + JsShell_Windows + JsShell_Android + js_shell_env + JsShell_Entry
+        js_script = f.read() + JsShell_Windows + js_shell_env + JsShell_Entry
         print("script ======> ", write_to_temp_file(js_script))
         script = session.create_script(js_script)
         script.on('message', on_message)
@@ -485,7 +485,7 @@ def run_android(args):
     device = frida.get_usb_device()
     session = device.attach(args)
     with open("inject.js") as f:
-        js_script = f.read() + JsShell_Windows + JsShell_Android + js_shell_env + JsShell_Entry
+        js_script = f.read() + JsShell_Android + js_shell_env + JsShell_Entry
         print("script ======> ", write_to_temp_file(js_script))
         script = session.create_script(js_script)
         script.on('message', on_message)
