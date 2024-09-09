@@ -24,7 +24,7 @@
 var module_function_windows = [
 ///******************************************************************************
 //  GetWindowTextA 劫持返回值示例
-{'key' : 'user32_GetWindowTextA' , 'global': {}, 'module': 'user32.dll', 'func': 'GetWindowTextA',
+{'enable' : false , 'key' : 'user32_GetWindowTextA' , 'global': {}, 'module': 'user32.dll', 'func': 'GetWindowTextA',
     'pre': function (args) {
         console.log('[+] Called GetWindowTextA');
         var params = this.context;
@@ -50,7 +50,7 @@ var module_function_windows = [
         console.log('');
         delete obj.global[params.ebp];
     } },
-{'key' : 'kernelbase_readfile' , 'global': {}, 'module': 'kernelbase.dll', 'func': 'ReadFile',
+{'enable' : false , 'key' : 'kernelbase_readfile' , 'global': {}, 'module': 'kernelbase.dll', 'func': '_____ReadFile',
     'pre': function (args) {
         console.log('[+] Called KernelBase!ReadFile');
         var params = this.context;
@@ -80,9 +80,9 @@ var module_function_windows = [
 //******************************************************************************/
 
 //  HOOK 示例
-{'key' : '' , 'global': {}, 'module': '', 'address': 0, 'pre': null, 'post': null},
-{'key' : '' , 'global': {}, 'module': '', 'offset': 0, 'pre': null, 'post': null},
-{'key' : '' , 'global': {}, 'module': '', 'func': '', 'pre': null, 'post': null}
+{'enable' : true , 'key' : '' , 'global': {}, 'module': '', 'address': 0, 'pre': null, 'post': null},
+{'enable' : true , 'key' : '' , 'global': {}, 'module': '', 'offset': 0, 'pre': null, 'post': null},
+{'enable' : true , 'key' : '' , 'global': {}, 'module': '', 'func': '', 'pre': null, 'post': null}
 ];
 
 //  HOOK 列表
@@ -98,6 +98,7 @@ var module_function_windows = [
 //  https://frida.re/docs/javascript-api/
 var module_function_android = [
     {
+        'enable' : true ,
         'class': 'com.lenovo.hec.vault.api.FileStationManager',
         'init': function (class_object)
          {
@@ -114,8 +115,8 @@ var module_function_android = [
         } ,
         'object' : null
     },
-    /*
     {
+        'enable' : false ,
         'class': 'com.zui.continuity.board.util.LogUtils',
         'init': function (class_object){
             let LogUtils = class_object;
@@ -125,8 +126,7 @@ var module_function_android = [
         },
         'object' : null
     },
-    */
-    { 'class': '', 'init': null, 'object' : null }
+    {'enable' : true , 'class': '', 'init': null, 'object' : null }
 ];
 
 var module_run_event = {
@@ -136,7 +136,7 @@ var module_run_event = {
     'post' : function (system_env) {
         console.log(`call module run event post : ${system_env.system_type}`);
         //  Dll 注入示例
-        //var inj = RunInjectDll("D:\\TestDir\\VS2022\\VS2022Test\\x64\\Release\\Test054_DllInjectDll.dll", true);
+        //var inj = RunInjectDll("D:\\Lenovo\\TestTools\\TestTools\\x64\\Release\\CameraTestModule.dll", false);
         //console.log('inject = ' + inj);
     }
 };

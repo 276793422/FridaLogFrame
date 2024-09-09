@@ -294,6 +294,9 @@ function RunInjectDll(dll_path, unload = false) {
 function CallHookFunction(class_name, class_object) {
     for (var i in module_function_android) {
         var node = module_function_android[i]
+        if (node.enable != true) {
+            continue;
+        }
         if (node.class == '') {
             continue;
         }
@@ -361,10 +364,6 @@ function CreateHijackAndroid() {
 }
 
 //CreateHijackAndroid();
-
-
-
-
 
 
 
